@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  Key:
+    Type: String
+  SGID:
+    Type: String
+Resources:
+  TestInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c3fd0f5d33134a76
+      InstanceType: t2.micro
+      KeyName: !Ref Key
+      SecurityGroupIds:
+        - !Ref SGID
+  TestInstance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c3fd0f5d33134a76
+      InstanceType: t2.micro
+      KeyName: !Ref Key
+      SecurityGroupIds:
+        - !Ref SGID
+  RecoveryTestAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription:
+        Trigger a recovery when instance status check fails for 2
+        consecutive minutes.
+      AlarmName: !Sub
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed
+      Statistic: Minimum
+      Period: "60"
+      EvaluationPeriods: "2"
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: "0"
+      AlarmActions: [!Sub "arn:aws:automate:${AWS::Region}:ec2:reboot"]
+      Dimensions:
+        - Name: InstanceId
+          Value:
+            Ref: TestInstance
